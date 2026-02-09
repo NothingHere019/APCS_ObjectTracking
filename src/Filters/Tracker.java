@@ -13,9 +13,19 @@ import java.util.ArrayList;
 public class Tracker implements PixelFilter, Drawable {
     private int centerRow;
     private int centerCol;
+    Fruit apple = new Fruit(240, -30, 60, 60, 0);
+    Fruit blueberries = new Fruit(600, -30, 60, 60, 2);
+    ArrayList<Fruit> fruits = new ArrayList<>();
+    int counter;
+    int score;
 
     @Override
     public DImage processImage(DImage img) {
+        if (counter % 25 == 0) {
+            int width = (int)(Math.random() * 51 + 50);
+            fruits.add(new Fruit((int) (Math.random() * 540), -30, width, width, (int)(Math.random() * 3)));
+        }
+        counter++;
         short[][] red = img.getRedChannel();
         short[][] green = img.getGreenChannel();
         short[][] blue = img.getBlueChannel();
@@ -63,25 +73,20 @@ public class Tracker implements PixelFilter, Drawable {
         }
         centerRow = (!avgRowList.isEmpty()) ? avgRowList.getLast() : 240;
         centerCol = (!avgRowList.isEmpty()) ? avgColList.getLast() : 320;
-        if (centerRow > 2 && centerCol > 2 && centerRow < 476 && centerCol < 636) {
-            for (int r = avgRowList.getLast() - 2; r < avgRowList.getLast() + 3; r++) {
-                for (int c = avgColList.getLast() - 2; c < avgColList.getLast() + 3; c++){
-                    red[r][c] = 255;
-                    green[r][c] = 255;
-                    blue[r][c] = 255;
-                }
-            }
-        }
         img.setColorChannels(red, green, blue);
         return img;
     }
 
     @Override
     public void drawOverlay(PApplet window, DImage original, DImage filtered) {
-        ArrayList<Fruit> fruits = new ArrayList<>();
-        fruits.add(new Fruit(240, 320, 30, 30, 0));
-        fruits.add(new Fruit(600, 400, 30, 30, 2));
+        window.noStroke();
+        fruits.add(apple);
+        fruits.add(blueberries);
         drawAndCheckFruits(fruits, window);
+        if (centerRow > 2 && centerCol > 2 && centerRow < 476 && centerCol < 636) {
+            window.fill(255, 255, 255);
+            window.rect(centerCol - 2, centerRow - 2, 5, 5);
+        }
     }
 
     @Override
@@ -95,7 +100,16 @@ public class Tracker implements PixelFilter, Drawable {
 
     public void drawAndCheckFruits(ArrayList<Fruit> fruits, PApplet window) {
         for (Fruit fruit: fruits) {
-            if (isCenterOnFruitAndFruitAlive(fruit)) fruit.setAlive(false);
+            if (isCenterOnFruitAndFruitAlive(fruit)) {
+                fruit.setAlive(false);
+                score++;
+                System.out.println("Score: " + score);
+            }
+            if (fruit.getY() > 480 && fruit.isAlive()) {
+                fruit.setAlive(false);
+                score--;
+                System.out.println("Score: " + score);
+            }
             fruit.drawFruit(window);
         }
     }
